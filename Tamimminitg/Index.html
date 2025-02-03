@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reward Task Example</title>
+    <!-- Monetag Ad Script -->
+    <script src='//niphaumeenses.net/vignette.min.js' data-zone='8885746' data-sdk='show_8885746'></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; margin: 0; font-family: Arial, sans-serif;
+            background-image:url(https://i.postimg.cc/FKJbP12Z/rm21-texture-jite-47.jpg);
+            color: #bbecffff; padding: 20px; box-sizing: border-box; padding-bottom: 90px;
+        }
+        .user-card, .ad-container, .ad-windrow {
+            background-image: url(https://i.postimg.cc/FKJbP12Z/rm21-texture-jite-47.jpg);
+            border: 2px solid #0040ff; border-radius: 15px; width: 90%; max-width: 400px;
+            margin: 20px auto; color: #ffff; box-sizing: border-box; padding: 20px; text-align: center;
+        }
+        .reward-button, .withdraw-section button, .modal-content button {
+            background-color: #598cff; padding: 15px; font-size: 16px; margin-top: 15px;
+            border-radius: 5px; cursor: pointer; color: #fff; border: none; width: 100%;
+        }
+        .reward-button:hover, .withdraw-section button:hover, .modal-content button:hover {
+            background-color: rgb(128,153,255);
+        }
+        .bottom-nav { display: flex; justify-content: space-around; position: fixed; bottom: 0;
+            width: 100%; max-width: 600px; background: #333; padding: 15px 0; box-sizing: border-box;
+        }
+        .bottom-nav a { text-align: center; color: #bbecffff; font-size: 1.2em; text-decoration: none; }
+        .bottom-nav a:hover { color: #fff700; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center;
+            visibility: hidden; opacity: 0; transition: visibility 0.3s, opacity 0.3s; padding: 20px; box-sizing: border-box;
+        }
+        .modal.active { visibility: visible; opacity: 1; }
+        .modal-content { background: #333; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px;
+            text-align: center; border: 2px solid #bbecffff; color: #bbecffff; box-sizing: border-box;
+        }
+        .modal-content input, .modal-content select {
+            width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;
+            font-size: 16px; background-color: #222; color: #bbecffff; box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-card">
+        <div class="user-info">
+            <div class="user-details">
+                <h2 id="userName">Your Name</h2>
+                <p>Number - <span id="userNumber">000000</span></p>
+            </div>
+        </div>
+        <div class="balance-info">
+            <p>Points: <span id="userPoints">0</span></p>
+            <p>Balance: $<span id="userBalance">0.00</span></p>
+        </div>
+    </div>
+
+    <div class="ad-container">
+        <h1>Complete Reward Task</h1>
+        <button class="reward-button" onclick="showRewardedAd()">Reward Task</button>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="#"><i class="fas fa-home"></i>Home</a>
+        <a href="https://t.me/earntodaytamim"><i class="fas fa-share-alt"></i>Share</a>
+        <a href="https://t.me/earntodaytamim" target="_blank"><i class="fas fa-user-tie"></i>Developer Abir</a>
+        <a href="#" onclick="openWithdrawModal()"><i class="fas fa-money-check"></i> Withdraw</a>
+    </div>
+
+    <!-- User Info Modal -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <h3>What's your name and number?</h3>
+            <input type="text" id="inputName" placeholder="Enter your name">
+            <input type="text" id="inputNumber" placeholder="Enter your number">
+            <button onclick="saveUserInfo()">Save</button>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <h3>Withdraw Funds</h3>
+            <p>Available Balance: $<span id="availableBalance"></span></p>
+            <input type="number" id="withdrawAmount" placeholder="Enter amount to withdraw" min="0" step="0.01">
+            <select id="withdrawMethod">
+                <option value="">Select Method</option>
+                <option value="Bkash">Bkash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Binance">Binance</option>
+            </select>
+            <input type="text" id="paymentDetails" placeholder="Enter payment details">
+            <button onclick="processWithdrawal()">Request Withdrawal</button>
+            <button onclick="closeWithdrawModal()">Cancel</button>
+        </div>
+    </div>
+
+<script>
+    let points = 0;
+    let balance = 0;
+
+    // Load saved data
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedName = localStorage.getItem('userName');
+        const savedNumber = localStorage.getItem('userNumber');
+        if (savedName && savedNumber) {
+            document.getElementById('userName').textContent = savedName;
+            document.getElementById('userNumber').textContent = savedNumber;
+        } else {
+            document.getElementById('userModal').classList.add('active');
+        }
+        points = parseInt(localStorage.getItem('userPoints') || '0');
+        balance = parseFloat(localStorage.getItem('userBalance') || '0.00');
+        updateBalance();
+    });
+
+    function saveUserInfo() {
+        const name = document.getElementById('inputName').value;
+        const number = document.getElementById('inputNumber').value;
+        if (name && number) {
+            localStorage.setItem('userName', name);
+            localStorage.setItem('userNumber', number);
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userNumber').textContent = number;
+            document.getElementById('userModal').classList.remove('active');
+        } else {
+            alert("Please enter both your name and number.");
+        }
+    }
+
+    function showRewardedAd() {
+        if (typeof show_8885746 === 'function') {
+            show_8885746().then(() => {
+                points += 10;
+                balance += 50.01;
+                localStorage.setItem('userPoints', points);
+                localStorage.setItem('userBalance', balance.toFixed(2));
+                updateBalance();
+                alert('You have completed the Reward Task and earned 10 points!');
+            }).catch(error => {
+                alert('Failed to show rewarded ad.');
+                console.error('Ad error:', error);
+            });
+        } else {
+            alert('Rewarded ad not available.');
+        }
+    }
+
+    function updateBalance() {
+        document.getElementById('userPoints').textContent = points;
+        document.getElementById('userBalance').textContent = balance.toFixed(2);
+        localStorage.setItem('userPoints', points);
+        localStorage.setItem('userBalance', balance.toFixed(2));
+    }
+
+    function openWithdrawModal() {
+        document.getElementById('availableBalance').textContent = balance.toFixed(2);
+        document.getElementById('withdrawModal').classList.add('active');
+    }
+
+    function closeWithdrawModal() {
+        document.getElementById('withdrawModal').classList.remove('active');
+    }
+
+    // Process Withdrawal with Telegram integration
+    function processWithdrawal() {
+        const amount = parseFloat(document.getElementById('withdrawAmount').value);
+        const method = document.getElementById('withdrawMethod').value;
+        const paymentDetails = document.getElementById('paymentDetails').value;
+        const userName = document.getElementById('userName').textContent;
+        const userNumber = document.getElementById('userNumber').textContent;
+
+        if (amount < 50) {
+            alert("Minimum withdrawal amount is $50.");
+            return;
+        }
+        if (amount > balance) {
+            alert("You don't have enough balance.");
+            return;
+        }
+        if (!method) {
+            alert("Please select a withdrawal method.");
+            return;
+        }
+        if (!paymentDetails) {
+            alert("Please enter payment details.");
+            return;
+        }
+
+        // Deduct from balance
+        balance -= amount;
+        updateBalance();
+
+        // Send withdrawal request to Telegram
+        const telegramBotToken = '7523420520:AAEFiocb43qxFeIHSRFg36fWiXpu9-bQlDM';
+        const telegramChatId = '6803843822';
+        const message = `New Withdrawal Request:\nName: ${userName}\nNumber: ${userNumber}\nAmount: $${amount.toFixed(2)}\nMethod: ${method}\nDetails: ${paymentDetails}`;
+
+        fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                chat_id: telegramChatId,
+                text: message
+            })
+        }).then(response => {
+            if (response.ok) {
+                alert(`Withdrawal request of $${amount.toFixed(2)} via ${method} has been submitted.`);
+            } else {
+                alert('Failed to send withdrawal request to Telegram.');
+            }
+        });
+
+        closeWithdrawModal();
+    }
+</script>
+</body>
+</html>
